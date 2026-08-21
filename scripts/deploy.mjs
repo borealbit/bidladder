@@ -98,6 +98,19 @@ function createAdminCredentials() {
   };
 }
 
+function requireStripeSecret(name, pattern) {
+  const value = process.env[name];
+  if (!value || !pattern.test(value) || value.includes("\n") || value.includes("\r")) {
+    throw new Error(
+      `${name} is required and must be a valid Stripe secret. See docs/DEPLOYMENT.md.`,
+    );
+  }
+  return value;
+}
+
+const stripeApiKey = requireStripeSecret("STRIPE_API_KEY", /^(rk|sk)_(test|live)_/);
+const stripeWebhookSecret = requireStripeSecret("STRIPE_WEBHOOK_SECRET", /^whsec_/);
+
 console.log("Checking the active Cloudflare account...");
 run(["exec", "wrangler", "whoami"]);
 await ensureDatabaseBinding();
@@ -113,11 +126,17 @@ const temporaryDirectory = await mkdtemp(path.join(tmpdir(), "bidladder-deploy-"
 const secretsPath = path.join(temporaryDirectory, ".env");
 
 try {
-  await writeFile(secretsPath, `ADMIN_API_KEY_HASH=${credentials.hash}\n`, {
-    encoding: "utf8",
-    mode: 0o600,
-  });
-  console.log("Deploying the Worker and admin-key hash...");
+  await writeFile(
+    secretsPath,
+    [
+      `ADMIN_API_KEY_HASH=${credentials.hash}`,
+      `STRIPE_API_KEY=${stripeApiKey}`,
+      `STRIPE_WEBHOOK_SECRET=${stripeWebhookSecret}`,
+      "",
+    ].join("\n"),
+    { encoding: "utf8", mode: 0o600 },
+  );
+  console.log("Deploying the Worker and required secrets...");
   run(["exec", "wrangler", "deploy", "--secrets-file", secretsPath]);
 } finally {
   await rm(temporaryDirectory, { force: true, recursive: true });
