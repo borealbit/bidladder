@@ -4,7 +4,10 @@ import { secureHeaders } from "hono/secure-headers";
 
 import { HttpProblem } from "../http/problem";
 import type { WorkerExecutionContext } from "../http/react-router-context";
+import { recordPlacementClick, shouldCountPlacementClick } from "../modules/leaderboard/clicks";
 import { createLeaderboardApi } from "../modules/leaderboard/http";
+import { createPaymentsApi } from "../modules/payments/http";
+import { createDatabase } from "../platform/d1/client";
 
 type ServerEnvironment = {
   Bindings: Env;
@@ -51,15 +54,35 @@ export function createServer(ssrHandler: SsrHandler) {
 
   app.get("/sitemap.xml", (context) => {
     const origin = new URL(context.req.url).origin;
-    const escapedOrigin = origin.replaceAll("&", "&amp;").replaceAll("<", "&lt;");
+    const pages = ["/", "/rules", "/deploy"]
+      .map((path) => `<url><loc>${new URL(path, origin).href}</loc></url>`)
+      .join("");
     return context.body(
-      `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${escapedOrigin}/</loc></url></urlset>`,
+      `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${pages}</urlset>`,
       200,
       { "Content-Type": "application/xml; charset=utf-8" },
     );
   });
 
+  app.get("/go/:placementId", async (context) => {
+    const placementId = context.req.param("placementId");
+    const countClick = await shouldCountPlacementClick(
+      context.req.raw,
+      context.env.PUBLIC_WRITE_RATE_LIMITER,
+      placementId,
+    );
+    const destination = await recordPlacementClick(
+      createDatabase(context.env.DB),
+      placementId,
+      countClick,
+    );
+    context.header("Cache-Control", "private, no-store");
+    context.header("X-Robots-Tag", "noindex, nofollow");
+    return context.redirect(destination, 302);
+  });
+
   app.route("/api/v1", createLeaderboardApi());
+  app.route("/api/v1", createPaymentsApi());
   app.all("/api/*", (context) =>
     context.json(
       {
@@ -90,6 +113,10 @@ export function createServer(ssrHandler: SsrHandler) {
       );
     }
 
+    if (problem.status === 429) {
+      context.header("Retry-After", "60");
+    }
+
     return context.json(
       {
         error: {
@@ -98,7 +125,7 @@ export function createServer(ssrHandler: SsrHandler) {
           requestId: context.get("requestId"),
         },
       },
-      problem.status as 400 | 401 | 403 | 404 | 409 | 500 | 503,
+      problem.status as 400 | 401 | 403 | 404 | 409 | 413 | 429 | 500 | 503,
     );
   });
 
