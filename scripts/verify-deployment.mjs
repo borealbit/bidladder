@@ -63,7 +63,10 @@ await check("health and security headers", async () => {
 await check("server-rendered home page", async () => {
   const response = await request("/");
   assert(response.status === 200, `expected 200, received ${response.status}`);
-  assert((await response.text()).includes("BidLadder"), "home page does not identify BidLadder");
+  const html = await response.text();
+  assert(html.includes("BidLadder"), "home page does not identify BidLadder");
+  assert(html.includes('rel="canonical"'), "home page canonical is missing");
+  assert(html.includes(baseUrl.href), "home page canonical does not use the verified origin");
 });
 
 await check("public leaderboard API", async () => {
@@ -99,8 +102,15 @@ await check("Stripe webhook signature boundary", async () => {
 
 await check("robots and sitemap", async () => {
   const [robots, sitemap] = await Promise.all([request("/robots.txt"), request("/sitemap.xml")]);
-  assert(robots.status === 200 && (await robots.text()).includes("Disallow: /admin"), "bad robots");
-  assert(sitemap.status === 200 && (await sitemap.text()).includes("<urlset"), "bad sitemap");
+  const robotsText = await robots.text();
+  const sitemapText = await sitemap.text();
+  assert(robots.status === 200 && robotsText.includes("Allow: /"), "bad robots");
+  assert(!robotsText.includes("Disallow: /admin"), "admin noindex is blocked by robots");
+  assert(robotsText.includes(new URL("/sitemap.xml", baseUrl).href), "wrong sitemap origin");
+  assert(sitemap.status === 200 && sitemapText.includes("<urlset"), "bad sitemap");
+  for (const pathname of ["/", "/rules", "/deploy"]) {
+    assert(sitemapText.includes(new URL(pathname, baseUrl).href), `sitemap is missing ${pathname}`);
+  }
 });
 
 const failures = checks.filter((entry) => !entry.passed).length;

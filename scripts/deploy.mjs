@@ -108,12 +108,52 @@ function requireStripeSecret(name, pattern) {
   return value;
 }
 
+function requirePublicOrigin() {
+  const rawValue = process.env.BIDLADDER_PUBLIC_ORIGIN;
+  if (!rawValue) {
+    throw new Error(
+      "BIDLADDER_PUBLIC_ORIGIN is required. Use the exact public HTTPS origin documented in docs/DEPLOYMENT.md.",
+    );
+  }
+
+  const url = new URL(rawValue);
+  if (
+    url.protocol !== "https:" ||
+    url.username ||
+    url.password ||
+    url.pathname !== "/" ||
+    url.search ||
+    url.hash
+  ) {
+    throw new Error(
+      "BIDLADDER_PUBLIC_ORIGIN must be an HTTPS origin without credentials, path, query, or hash.",
+    );
+  }
+  return url.origin;
+}
+
+async function setPublicOriginBinding(publicOrigin) {
+  const config = await readFile(configPath, "utf8");
+  const pattern = /"PUBLIC_ORIGIN"\s*:\s*"[^"]*"/;
+  if (!pattern.test(config)) {
+    throw new Error("Could not find the PUBLIC_ORIGIN binding in wrangler.jsonc.");
+  }
+  await writeFile(
+    configPath,
+    config.replace(pattern, `"PUBLIC_ORIGIN": ${JSON.stringify(publicOrigin)}`),
+    "utf8",
+  );
+}
+
 const stripeApiKey = requireStripeSecret("STRIPE_API_KEY", /^(rk|sk)_(test|live)_/);
 const stripeWebhookSecret = requireStripeSecret("STRIPE_WEBHOOK_SECRET", /^whsec_/);
+const publicOrigin = requirePublicOrigin();
 
 console.log("Checking the active Cloudflare account...");
 run(["exec", "wrangler", "whoami"]);
 await ensureDatabaseBinding();
+await setPublicOriginBinding(publicOrigin);
+run(["cf-typegen"]);
 
 console.log("Building BidLadder...");
 run(["build"]);
