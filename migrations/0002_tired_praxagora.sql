@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX `payment_attempts_active_bid_unique` ON `payment_attempts` (`bid_id`) WHERE "payment_attempts"."status" IN ('creating', 'open', 'processing');
