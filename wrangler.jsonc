@@ -11,8 +11,29 @@
       "migrations_dir": "migrations"
     }
   ],
+  "ratelimits": [
+    {
+      "name": "PUBLIC_WRITE_RATE_LIMITER",
+      "namespace_id": "88273001",
+      "simple": {
+        "limit": 12,
+        "period": 60
+      }
+    },
+    {
+      "name": "ADMIN_RATE_LIMITER",
+      "namespace_id": "88273002",
+      "simple": {
+        "limit": 60,
+        "period": 60
+      }
+    }
+  ],
+  "vars": {
+    "STRIPE_INTEGRATION_IDENTIFIER": "bidladder-rkqjvmpx"
+  },
   "secrets": {
-    "required": ["ADMIN_API_KEY_HASH"]
+    "required": ["ADMIN_API_KEY_HASH", "STRIPE_API_KEY", "STRIPE_WEBHOOK_SECRET"]
   },
   "observability": {
     "enabled": true,
