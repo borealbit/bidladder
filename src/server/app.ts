@@ -3,6 +3,7 @@ import { requestId } from "hono/request-id";
 import { secureHeaders } from "hono/secure-headers";
 
 import { HttpProblem } from "../http/problem";
+import { isCanonicalRequest, publicUrl } from "../http/public-origin";
 import type { WorkerExecutionContext } from "../http/react-router-context";
 import { recordPlacementClick, shouldCountPlacementClick } from "../modules/leaderboard/clicks";
 import { createLeaderboardApi } from "../modules/leaderboard/http";
@@ -46,16 +47,21 @@ export function createServer(ssrHandler: SsrHandler) {
   );
 
   app.get("/robots.txt", (context) => {
-    const origin = new URL(context.req.url).origin;
+    if (!isCanonicalRequest(context.req.url, context.env.PUBLIC_ORIGIN)) {
+      return context.text("User-agent: *\nDisallow: /\n");
+    }
+
     return context.text(
-      `User-agent: *\nAllow: /\nDisallow: /admin\nSitemap: ${origin}/sitemap.xml\n`,
+      `User-agent: *\nAllow: /\nSitemap: ${publicUrl("/sitemap.xml", context.req.url, context.env.PUBLIC_ORIGIN)}\n`,
     );
   });
 
   app.get("/sitemap.xml", (context) => {
-    const origin = new URL(context.req.url).origin;
     const pages = ["/", "/rules", "/deploy"]
-      .map((path) => `<url><loc>${new URL(path, origin).href}</loc></url>`)
+      .map(
+        (path) =>
+          `<url><loc>${publicUrl(path, context.req.url, context.env.PUBLIC_ORIGIN)}</loc></url>`,
+      )
       .join("");
     return context.body(
       `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${pages}</urlset>`,
@@ -129,7 +135,20 @@ export function createServer(ssrHandler: SsrHandler) {
     );
   });
 
-  app.all("*", (context) => ssrHandler(context.req.raw, context.env, context.executionCtx));
+  app.all("*", async (context) => {
+    const response = await ssrHandler(context.req.raw, context.env, context.executionCtx);
+    if (isCanonicalRequest(context.req.url, context.env.PUBLIC_ORIGIN)) {
+      return response;
+    }
+
+    const headers = new Headers(response.headers);
+    headers.set("X-Robots-Tag", "noindex, nofollow");
+    return new Response(response.body, {
+      headers,
+      status: response.status,
+      statusText: response.statusText,
+    });
+  });
 
   return app;
 }
