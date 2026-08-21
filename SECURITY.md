@@ -18,9 +18,13 @@ Self-hosting transfers deployment security to the operator. In particular:
 
 - protect the raw admin key and Cloudflare credentials;
 - store only the SHA-256 admin-key hash in `ADMIN_API_KEY_HASH`;
+- use a least-privilege Stripe restricted key and protect both Stripe Worker secrets;
+- keep Stripe test/live keys and webhook endpoint secrets aligned with the deployment environment;
 - restrict access to Cloudflare accounts and D1 data;
 - review dependencies and migrations before deployment;
-- add appropriate payment, legal, privacy, and abuse controls if extending BidLadder beyond bid proposals; and
+- configure appropriate tax, refund, legal, privacy, sanctions, and abuse controls before accepting payments; and
 - rotate the admin key immediately if it may have been disclosed.
+
+BidLadder verifies Stripe signatures against the raw request body and claims provider event IDs before processing. Do not bypass those boundaries or treat the Checkout return URL as payment proof. Refund events intentionally pause public placement; operators should reconcile Stripe and D1 before restoring disputed state.
 
 See [Deployment](docs/DEPLOYMENT.md) for key rotation instructions and [Architecture](docs/ARCHITECTURE.md) for trust boundaries.

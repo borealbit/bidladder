@@ -6,23 +6,30 @@
 [![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-F38020?logo=cloudflare&logoColor=white)](https://workers.cloudflare.com/)
 [![Code style: Biome](https://img.shields.io/badge/code_style-Biome-60A5FA)](https://biomejs.dev/)
 
-BidLadder is an open-source, self-hosted sponsored leaderboard for Cloudflare Workers. Sponsors submit bids for clearly labeled placement; maintainers review each submission, and approved sponsors are ordered by bid amount.
+BidLadder is an open-source, self-hosted sponsored leaderboard for Cloudflare Workers. Sponsors contribute to clearly labeled placements; maintainers review each paid submission, and approved products are ordered by their lifetime sponsored total.
 
 **Self-hosted. MIT licensed. One Worker, one D1 database.**
 
 ## Features
 
-- Public sponsored leaderboard with transparent bid amounts
+- Public sponsored leaderboard with transparent lifetime totals and deterministic ordering
+- Privacy-friendly outbound click counts with bot filtering and rate-limit protection
+- URL-first two-step sponsorship flow with per-rank calls to action
+- Canonical App Store, GitHub, and website identities with tracking parameters removed
 - Sponsor submission form with idempotent API requests
+- Stripe-hosted Checkout with signed, replay-safe webhook fulfillment
+- Explicit payment state machine with refund-aware placement pausing
 - Key-protected moderation dashboard at `/admin`
-- Approval and rejection workflow with retained bid history
+- Approval and rejection workflow; unpaid bids cannot be approved
+- Public, configurable review and refund-initiation timelines
+- Cloudflare binding-based write and admin rate limits
 - Server-rendered React Router application and versioned Hono API
 - Cloudflare D1 schema and reviewed Drizzle migrations
 - Security headers, stable JSON errors, health check, robots file, and sitemap
-- One-command first deployment to Cloudflare
+- One-command first deployment and a state-neutral production verifier
 
 > [!IMPORTANT]
-> BidLadder currently records and moderates bid proposals; it does not collect or settle payments. Add a payment provider and your own commercial, tax, refund, and compliance rules before treating an approved bid as a paid transaction.
+> BidLadder integrates Stripe Checkout for one-time sponsorship payments. Self-hosters remain responsible for configuring Stripe, taxes, refunds, privacy disclosures, sanctions controls, and other obligations that apply to their business and market. Automatic tax collection is not enabled by default.
 
 ## Stack
 
@@ -51,14 +58,22 @@ cp .dev.vars.example .dev.vars
 node scripts/generate-admin-key.mjs
 ```
 
-Copy the generated `ADMIN_API_KEY_HASH` into `.dev.vars`, then initialize the local D1 database and start the app:
+Copy the generated `ADMIN_API_KEY_HASH` into `.dev.vars`, then add a Stripe restricted test key and a local webhook signing secret. Initialize D1 and start the app:
 
 ```bash
 pnpm db:migrate:local
 pnpm dev
 ```
 
-Open the local URL printed by Vite. The public ladder is at `/`; moderation is at `/admin`. Enter the **raw admin key** printed by the generator in the admin screen. Only its SHA-256 hash is stored in the Worker secret.
+In another terminal, forward Stripe test events to the local Worker (replace the port with the one printed by Vite):
+
+```bash
+stripe listen --forward-to http://localhost:5173/api/v1/webhooks/stripe
+```
+
+Copy the resulting `whsec_...` value into `.dev.vars` as `STRIPE_WEBHOOK_SECRET`, then restart the development server. See [Deployment](docs/DEPLOYMENT.md) for the required Stripe permissions and event list.
+
+Open the local URL printed by Vite. The public ladder is at `/`, its commercial rules are at `/rules`, the open-source deployment page is at `/deploy`, and moderation is at `/admin`. Enter the **raw admin key** printed by the generator in the admin screen. Only its SHA-256 hash is stored in the Worker secret.
 
 ## Deploy to Cloudflare
 
@@ -66,10 +81,16 @@ Authenticate Wrangler once, then run the setup deployment:
 
 ```bash
 pnpm exec wrangler login
+export STRIPE_API_KEY='rk_live_...'
+export STRIPE_WEBHOOK_SECRET='whsec_...'
 pnpm deploy:setup
 ```
 
-The setup command creates or reuses the `bidladder` D1 database, updates the local binding, applies remote migrations, generates an admin key, uploads its hash as a Worker secret, and deploys the application. Save the raw admin key printed at the end; it cannot be recovered from Cloudflare.
+The setup command creates or reuses the `bidladder` D1 database, applies remote migrations, generates an admin key, uploads all required Worker secrets, and deploys the application. Save the raw admin key printed at the end; it cannot be recovered from Cloudflare. After deployment, run the state-neutral verifier:
+
+```bash
+pnpm verify:deployment -- https://your-bidladder.example
+```
 
 For location selection, repeat deployments, key rotation, and manual deployment steps, read [Deployment](docs/DEPLOYMENT.md).
 
@@ -80,6 +101,7 @@ For location selection, repeat deployments, key rotation, and manual deployment 
 | `pnpm dev` | Run the Worker and React Router app locally |
 | `pnpm build` | Create a production build |
 | `pnpm test` | Run integration tests in the Cloudflare Workers runtime |
+| `pnpm verify:deployment -- URL` | Verify a deployed installation without creating bids or payments |
 | `pnpm check` | Run type generation, TypeScript, and Biome checks |
 | `pnpm quality` | Run all checks, tests, and the production build |
 | `pnpm db:generate` | Generate a migration from the Drizzle schema |
@@ -95,12 +117,17 @@ All API responses are JSON under `/api/v1`.
 | Method | Endpoint | Access |
 | --- | --- | --- |
 | `GET` | `/api/v1/leaderboards/:slug` | Public |
+| `GET` | `/go/:placementId` | Public outbound redirect; records accepted click-throughs |
 | `POST` | `/api/v1/leaderboards/:slug/bids` | Public; requires `Idempotency-Key` |
+| `POST` | `/api/v1/bids/:bidId/checkout` | Public; creates or resumes Stripe Checkout |
+| `GET` | `/api/v1/bids/:bidId/payment` | Public; payment and moderation status |
+| `POST` | `/api/v1/webhooks/stripe` | Stripe signature required |
 | `GET` | `/api/v1/admin/bids?status=pending` | Admin bearer key |
 | `POST` | `/api/v1/admin/bids/:bidId/decision` | Admin bearer key |
+| `POST` | `/api/v1/admin/payments/:bidId/reconcile` | Admin bearer key |
 | `GET` | `/health` | Public |
 
-The default migration creates the `main` ladder with USD as its currency and a minimum bid of $10. Change those values through a reviewed migration before deploying if your installation needs different defaults.
+The default migration creates the `main` ladder with USD as its currency, a $10 minimum contribution, $1 increments, a 3-business-day review window, and a 5-business-day refund-initiation window. Change those values through a reviewed migration before deploying if your installation needs different defaults.
 
 ## Documentation
 
