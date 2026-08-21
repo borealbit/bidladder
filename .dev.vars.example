@@ -2,6 +2,10 @@
 # node scripts/generate-admin-key.mjs
 ADMIN_API_KEY_HASH=replace-with-a-64-character-sha256-hash
 
+# Optional locally. Production deployments must set the exact public HTTPS
+# origin so canonical, sitemap, robots, and social URLs stay on one host.
+PUBLIC_ORIGIN=
+
 # Prefer a restricted Stripe API key with only the permissions documented in
 # docs/DEPLOYMENT.md. Keep test and live mode secrets in separate deployments.
 STRIPE_API_KEY=rk_test_replace_me
