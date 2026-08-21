@@ -1,14 +1,31 @@
+import { publicUrl } from "../../src/http/public-origin";
+import { cloudflareRequestContext } from "../../src/http/react-router-context";
 import { Brand } from "../components/brand";
 import type { Route } from "./+types/deploy";
 
-export function meta(): Route.MetaDescriptors {
+export function meta({ loaderData }: Route.MetaArgs): Route.MetaDescriptors {
+  const title = "Deploy BidLadder — Open-source Sponsored Leaderboard";
+  const description = "Deploy your own transparent sponsored leaderboard on Cloudflare.";
   return [
-    { title: "Deploy BidLadder — Open-source Sponsored Leaderboard" },
-    {
-      name: "description",
-      content: "Deploy your own transparent sponsored leaderboard on Cloudflare.",
-    },
+    { title },
+    { name: "description", content: description },
+    ...(loaderData?.canonicalUrl
+      ? [
+          { tagName: "link" as const, rel: "canonical", href: loaderData.canonicalUrl },
+          { property: "og:url", content: loaderData.canonicalUrl },
+        ]
+      : []),
+    { property: "og:type", content: "website" },
+    { property: "og:site_name", content: "BidLadder" },
+    { property: "og:title", content: title },
+    { property: "og:description", content: description },
+    { name: "twitter:card", content: "summary" },
   ];
+}
+
+export function loader({ context, request }: Route.LoaderArgs) {
+  const { env } = context.get(cloudflareRequestContext);
+  return { canonicalUrl: publicUrl("/deploy", request.url, env.PUBLIC_ORIGIN) };
 }
 
 export default function Deploy() {
@@ -28,8 +45,8 @@ export default function Deploy() {
         <section className="deploy-hero page-frame">
           <h1>Own the whole ladder.</h1>
           <p>
-            Deploy a transparent, bid-powered sponsored leaderboard with your brand, your rules, and
-            your Stripe account.
+            BidLadder is an open-source, self-hosted sponsored leaderboard for Cloudflare. Deploy it
+            with your brand, your rules, and your Stripe account.
           </p>
           <div className="hero-actions">
             <a
@@ -90,7 +107,10 @@ export default function Deploy() {
           <a href="https://github.com/borealbit/bidladder/blob/main/LICENSE">MIT License</a>
         </p>
         <p>
-          Created by <strong>Dom Liu</strong> · Maintained by <strong>BorealBit</strong>
+          Created by <strong>Dom Liu</strong> · Maintained by{" "}
+          <a href="https://github.com/borealbit">
+            <strong>BorealBit</strong>
+          </a>
         </p>
       </footer>
     </div>

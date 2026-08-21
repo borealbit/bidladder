@@ -5,4 +5,5 @@ export default [
   route("rules", "routes/rules.tsx"),
   route("deploy", "routes/deploy.tsx"),
   route("admin", "routes/admin.tsx"),
+  route("*", "routes/not-found.tsx"),
 ] satisfies RouteConfig;

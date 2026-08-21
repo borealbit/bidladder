@@ -1,3 +1,4 @@
+import { publicUrl } from "../../src/http/public-origin";
 import { cloudflareRequestContext } from "../../src/http/react-router-context";
 import { getPublicLeaderboard } from "../../src/modules/leaderboard/service";
 import { createDatabase } from "../../src/platform/d1/client";
@@ -15,19 +16,35 @@ function formatAmount(amountCents: number, currency: string) {
   }).format(amountCents / 100);
 }
 
-export function meta(): Route.MetaDescriptors {
+export function meta({ loaderData }: Route.MetaArgs): Route.MetaDescriptors {
+  const title = `${loaderData?.ladder.name ?? "BidLadder"} — Transparent Sponsored Leaderboard`;
+  const description =
+    loaderData?.ladder.description ??
+    "A transparent, bid-powered sponsored leaderboard for products and projects.";
   return [
-    { title: "BidLadder — Transparent Sponsored Leaderboard" },
-    {
-      name: "description",
-      content: "A transparent, bid-powered sponsored leaderboard for products and projects.",
-    },
+    { title },
+    { name: "description", content: description },
+    ...(loaderData?.canonicalUrl
+      ? [
+          { tagName: "link" as const, rel: "canonical", href: loaderData.canonicalUrl },
+          { property: "og:url", content: loaderData.canonicalUrl },
+        ]
+      : []),
+    { property: "og:type", content: "website" },
+    { property: "og:site_name", content: "BidLadder" },
+    { property: "og:title", content: title },
+    { property: "og:description", content: description },
+    { name: "twitter:card", content: "summary" },
   ];
 }
 
-export async function loader({ context }: Route.LoaderArgs) {
+export async function loader({ context, request }: Route.LoaderArgs) {
   const { env } = context.get(cloudflareRequestContext);
-  return getPublicLeaderboard(createDatabase(env.DB), "main");
+  const leaderboard = await getPublicLeaderboard(createDatabase(env.DB), "main");
+  return {
+    ...leaderboard,
+    canonicalUrl: publicUrl("/", request.url, env.PUBLIC_ORIGIN),
+  };
 }
 
 export default function Home({ loaderData }: Route.ComponentProps) {

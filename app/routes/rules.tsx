@@ -1,16 +1,37 @@
+import { publicUrl } from "../../src/http/public-origin";
 import { cloudflareRequestContext } from "../../src/http/react-router-context";
 import { getPublicLeaderboard } from "../../src/modules/leaderboard/service";
 import { createDatabase } from "../../src/platform/d1/client";
 import { Brand } from "../components/brand";
 import type { Route } from "./+types/rules";
 
-export function meta(): Route.MetaDescriptors {
-  return [{ title: "Rules — BidLadder" }];
+export function meta({ loaderData }: Route.MetaArgs): Route.MetaDescriptors {
+  const title = `Rules — ${loaderData?.ladder.name ?? "BidLadder"}`;
+  const description =
+    "How sponsored placement, payments, moderation, refunds, click counts, and takedowns work.";
+  return [
+    { title },
+    { name: "description", content: description },
+    ...(loaderData?.canonicalUrl
+      ? [
+          { tagName: "link" as const, rel: "canonical", href: loaderData.canonicalUrl },
+          { property: "og:url", content: loaderData.canonicalUrl },
+        ]
+      : []),
+    { property: "og:type", content: "website" },
+    { property: "og:title", content: title },
+    { property: "og:description", content: description },
+    { name: "twitter:card", content: "summary" },
+  ];
 }
 
-export async function loader({ context }: Route.LoaderArgs) {
+export async function loader({ context, request }: Route.LoaderArgs) {
   const { env } = context.get(cloudflareRequestContext);
-  return getPublicLeaderboard(createDatabase(env.DB), "main");
+  const leaderboard = await getPublicLeaderboard(createDatabase(env.DB), "main");
+  return {
+    ...leaderboard,
+    canonicalUrl: publicUrl("/rules", request.url, env.PUBLIC_ORIGIN),
+  };
 }
 
 function formatBusinessDays(days: number) {
@@ -76,6 +97,16 @@ export default function Rules({ loaderData }: Route.ComponentProps) {
             downloads, or conversions. BidLadder stores the aggregate count without storing an IP
             address or a per-click history in D1. The updated time is the most recent approved
             placement update.
+          </p>
+
+          <h2>Data and privacy</h2>
+          <p>
+            A submission stores its public listing details, contact email, payment status, and
+            moderation history in the operator&apos;s D1 database. The contact email is used for
+            review and Stripe Checkout, but it is not shown on the public leaderboard. Card details
+            are entered on Stripe&apos;s hosted checkout page rather than collected by BidLadder.
+            Operators are responsible for publishing any additional privacy notice, contact method,
+            retention period, and regional disclosures required for their installation.
           </p>
 
           <h2>What you can list</h2>
