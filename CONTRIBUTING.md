@@ -22,7 +22,7 @@ pnpm db:migrate:local
 pnpm dev
 ```
 
-Copy the generated hash into `.dev.vars`. Keep the generated raw key available for the local `/admin` screen.
+Copy the generated hash into `.dev.vars`, then configure a restricted Stripe test key and a Stripe CLI webhook secret as described in [Deployment](docs/DEPLOYMENT.md). Keep the generated raw key available for the local `/admin` screen.
 
 ## Making a change
 
@@ -55,6 +55,7 @@ A reviewable pull request should:
 - preserve the one-Worker, one-D1 deployment model unless a design discussion has approved a change;
 - keep API errors stable and machine-readable;
 - keep admin credentials server-side except for the raw key entered by the operator;
+- preserve webhook raw-body verification, provider event idempotency, and separation between payment and moderation state;
 - include screenshots for meaningful UI changes; and
 - pass checks, tests, and the production build.
 
