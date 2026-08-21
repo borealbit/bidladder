@@ -1,0 +1,54 @@
+{
+  "name": "bidladder",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "packageManager": "pnpm@11.22.0",
+  "engines": {
+    "node": ">=22.22.0"
+  },
+  "scripts": {
+    "build": "react-router build",
+    "check:architecture": "node scripts/check-architecture.mjs",
+    "dev": "react-router dev",
+    "preview": "pnpm build && vite preview",
+    "deploy": "pnpm build && wrangler deploy",
+    "deploy:setup": "node scripts/deploy.mjs",
+    "cf-typegen": "wrangler types",
+    "cf-typegen:check": "wrangler types --check",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "wrangler d1 migrations apply bidladder --local",
+    "db:migrate:remote": "wrangler d1 migrations apply bidladder --remote",
+    "check": "pnpm check:architecture && react-router typegen && wrangler types --check && tsc -b && biome check .",
+    "check:write": "biome check --write .",
+    "test": "vitest run",
+    "quality": "pnpm check && pnpm test && pnpm build",
+    "postinstall": "wrangler types"
+  },
+  "dependencies": {
+    "drizzle-orm": "0.45.2",
+    "hono": "4.13.3",
+    "isbot": "5.1.36",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "react-router": "8.3.0",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.9",
+    "@cloudflare/vite-plugin": "1.53.1",
+    "@cloudflare/vitest-plugin": "1.0.0",
+    "@react-router/dev": "8.3.0",
+    "@tailwindcss/vite": "4.3.3",
+    "@types/node": "22.20.1",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
+    "drizzle-kit": "0.31.10",
+    "tailwindcss": "4.3.3",
+    "typescript": "5.9.3",
+    "vite": "8.2.2",
+    "vitest": "4.1.11",
+    "wrangler": "4.125.0"
+  }
+}

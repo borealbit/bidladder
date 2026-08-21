@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "jsx": "react-jsx",
+    "lib": ["DOM", "DOM.Iterable", "ES2023"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "noEmit": true,
+    "resolveJsonModule": true,
+    "rootDirs": [".", "./.react-router/types"],
+    "skipLibCheck": true,
+    "strict": true,
+    "target": "ES2023",
+    "types": ["./worker-configuration.d.ts", "vite/client"]
+  },
+  "include": [
+    ".react-router/types/**/*",
+    "app/**/*",
+    "database/**/*",
+    "src/**/*",
+    "workers/**/*",
+    "worker-configuration.d.ts"
+  ]
+}

@@ -1,0 +1,3 @@
+# Generate a key and its SHA-256 hash with:
+# node scripts/generate-admin-key.mjs
+ADMIN_API_KEY_HASH=replace-with-a-64-character-sha256-hash
