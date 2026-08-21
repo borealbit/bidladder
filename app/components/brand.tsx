@@ -13,11 +13,17 @@ export function LadderMark({ compact = false }: { compact?: boolean }) {
   );
 }
 
-export function Brand({ compact = false }: { compact?: boolean }) {
+export function Brand({
+  compact = false,
+  name = "BidLadder",
+}: {
+  compact?: boolean;
+  name?: string;
+}) {
   return (
-    <Link aria-label="BidLadder home" className="brand" to="/">
+    <Link aria-label={`${name} home`} className="brand" to="/">
       <LadderMark compact={compact} />
-      <span>BidLadder</span>
+      <span>{name}</span>
     </Link>
   );
 }

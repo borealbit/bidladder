@@ -8,6 +8,16 @@ interface AdminBid {
   currency: string;
   id: string;
   name: string;
+  paymentStatus:
+    | "checkout_open"
+    | "checkout_pending"
+    | "expired"
+    | "failed"
+    | "paid"
+    | "partially_refunded"
+    | "processing"
+    | "refunded"
+    | "unpaid";
   status: BidStatus;
   submittedAt: number;
   tagline: string;
@@ -104,6 +114,36 @@ export function AdminDashboard() {
     }
   }
 
+  async function reconcile(bid: AdminBid) {
+    setLoading(true);
+    setMessage(null);
+    try {
+      const response = await fetch(`/api/v1/admin/payments/${bid.id}/reconcile`, {
+        headers: { Authorization: `Bearer ${token}` },
+        method: "POST",
+      });
+      const result = (await response.json()) as {
+        data?: { paymentStatus?: string };
+        error?: { message?: string };
+      };
+      if (!response.ok) {
+        throw new Error(result.error?.message ?? "Could not reconcile this payment.");
+      }
+      await loadBids(token, status);
+      setMessage({
+        kind: "success",
+        text: `Payment reconciled for ${bid.name}: ${result.data?.paymentStatus ?? "updated"}.`,
+      });
+    } catch (error) {
+      setMessage({
+        kind: "error",
+        text: error instanceof Error ? error.message : "Could not reconcile this payment.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div className="admin-surface">
       <section aria-labelledby="admin-access-title" className="admin-access">
@@ -172,6 +212,7 @@ export function AdminDashboard() {
                     <th>Sponsor</th>
                     <th>Website</th>
                     <th>Bid</th>
+                    <th>Payment</th>
                     <th>Submitted</th>
                     <th>Status</th>
                     <th>Actions</th>
@@ -193,6 +234,11 @@ export function AdminDashboard() {
                       <td className="table-money" data-label="Bid">
                         {formatBid(bid.amountCents, bid.currency)}
                       </td>
+                      <td data-label="Payment">
+                        <span className={`status-label status-label--${bid.paymentStatus}`}>
+                          {bid.paymentStatus.replaceAll("_", " ")}
+                        </span>
+                      </td>
                       <td data-label="Submitted">
                         {new Intl.DateTimeFormat("en-US", {
                           dateStyle: "medium",
@@ -209,8 +255,13 @@ export function AdminDashboard() {
                           <div className="row-actions">
                             <button
                               className="button button-primary button-small"
-                              disabled={loading}
+                              disabled={loading || bid.paymentStatus !== "paid"}
                               onClick={() => void decide(bid, "approved")}
+                              title={
+                                bid.paymentStatus === "paid"
+                                  ? "Approve this paid bid"
+                                  : "Stripe must confirm full payment before approval"
+                              }
                               type="button"
                             >
                               Approve
@@ -222,6 +273,14 @@ export function AdminDashboard() {
                               type="button"
                             >
                               Reject
+                            </button>
+                            <button
+                              className="button button-secondary button-small"
+                              disabled={loading}
+                              onClick={() => void reconcile(bid)}
+                              type="button"
+                            >
+                              Reconcile
                             </button>
                           </div>
                         ) : (

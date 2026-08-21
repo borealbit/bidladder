@@ -3,15 +3,24 @@ import { getPublicLeaderboard } from "../../src/modules/leaderboard/service";
 import { createDatabase } from "../../src/platform/d1/client";
 import { Brand } from "../components/brand";
 import { BidForm } from "../features/leaderboard/bid-form";
+import { CheckoutNotice } from "../features/leaderboard/checkout-notice";
 import { LeaderboardList } from "../features/leaderboard/leaderboard-list";
 import type { Route } from "./+types/home";
 
+function formatAmount(amountCents: number, currency: string) {
+  return new Intl.NumberFormat("en-US", {
+    currency,
+    maximumFractionDigits: 0,
+    style: "currency",
+  }).format(amountCents / 100);
+}
+
 export function meta(): Route.MetaDescriptors {
   return [
-    { title: "BidLadder — Deploy Your Own Sponsored Leaderboard" },
+    { title: "BidLadder — Transparent Sponsored Leaderboard" },
     {
       name: "description",
-      content: "An open-source, bid-powered sponsored leaderboard for Cloudflare Workers.",
+      content: "A transparent, bid-powered sponsored leaderboard for products and projects.",
     },
   ];
 }
@@ -22,46 +31,65 @@ export async function loader({ context }: Route.LoaderArgs) {
 }
 
 export default function Home({ loaderData }: Route.ComponentProps) {
+  const topAmountCents = loaderData.placements[0]?.amountCents ?? 0;
+  const suggestedAmountCents = Math.max(
+    loaderData.ladder.minimumBidCents,
+    topAmountCents + loaderData.ladder.bidIncrementCents,
+  );
+
   return (
     <div className="site-shell">
       <header className="site-header page-frame">
-        <Brand />
+        <Brand name={loaderData.ladder.name} />
         <nav aria-label="Primary navigation">
           <a href="#leaderboard">Leaderboard</a>
-          <a href="#how-it-works">How it works</a>
-          <a href="https://github.com/borealbit/bidladder" rel="noreferrer" target="_blank">
-            GitHub <span aria-hidden="true">↗</span>
+          <a href="/rules">Rules</a>
+          <a href="/deploy">
+            Deploy your own <span aria-hidden="true">↗</span>
           </a>
         </nav>
       </header>
 
       <main>
-        <section className="hero page-frame">
-          <div className="hero-copy">
-            <h1>Climb the ladder. Sponsor what matters.</h1>
-            <p>A transparent, bid-powered leaderboard you can deploy on Cloudflare in minutes.</p>
-            <div className="hero-actions">
-              <a className="button button-primary" href="#place-bid">
-                Place a bid <span aria-hidden="true">→</span>
-              </a>
-              <a
-                className="button button-secondary"
-                href="https://github.com/borealbit/bidladder"
-                rel="noreferrer"
-                target="_blank"
-              >
-                View on GitHub <span aria-hidden="true">↗</span>
-              </a>
-            </div>
+        <CheckoutNotice />
+        <section className="market-hero page-frame">
+          <div className="market-hero-copy">
+            <h1>
+              Claim the #1 sponsored spot for{" "}
+              <span>{formatAmount(suggestedAmountCents, loaderData.ladder.currency)}</span>
+            </h1>
+            <p>
+              {loaderData.ladder.description} Every payment adds to the product&apos;s lifetime
+              total. The highest total leads the ladder.
+            </p>
+            <ul className="market-facts" aria-label="Leaderboard facts">
+              <li>
+                <strong>{loaderData.placements.length}</strong> active sponsors
+              </li>
+              <li>
+                <strong>
+                  {formatAmount(loaderData.ladder.minimumBidCents, loaderData.ladder.currency)}
+                </strong>{" "}
+                minimum
+              </li>
+              <li>
+                <strong>100%</strong> sponsored and transparent
+              </li>
+            </ul>
           </div>
-          <LeaderboardList data={loaderData} />
-        </section>
-
-        <section className="lower-grid page-frame">
           <BidForm
+            bidIncrementCents={loaderData.ladder.bidIncrementCents}
             currency={loaderData.ladder.currency}
             minimumBidCents={loaderData.ladder.minimumBidCents}
+            suggestedAmountCents={suggestedAmountCents}
           />
+        </section>
+
+        <div className="page-frame leaderboard-frame">
+          <LeaderboardList data={loaderData} />
+        </div>
+
+        <section className="lower-grid page-frame">
           <section aria-labelledby="how-title" className="how-panel" id="how-it-works">
             <div>
               <h2 id="how-title">How it works</h2>
@@ -72,40 +100,55 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                 <span>1</span>
                 <div>
                   <strong>Submit</strong>
-                  <p>Choose your bid amount and share your sponsor details.</p>
+                  <p>Paste a product URL, choose a contribution, and preview the listing.</p>
                 </div>
               </li>
               <li>
                 <span>2</span>
                 <div>
                   <strong>Review</strong>
-                  <p>The maintainer reviews each submission to keep the ladder useful.</p>
+                  <p>Complete Stripe Checkout. The maintainer reviews every paid submission.</p>
                 </div>
               </li>
               <li>
                 <span>3</span>
                 <div>
                   <strong>Climb</strong>
-                  <p>Once approved, your position follows your current bid.</p>
+                  <p>Approval adds the payment to your lifetime total and recalculates the rank.</p>
                 </div>
               </li>
             </ol>
-            <div className="open-source-note">
-              <strong>Own the whole ladder.</strong>
-              <p>Fork it, shape the rules, and deploy one Worker with one D1 database.</p>
+          </section>
+          <section aria-labelledby="deploy-title" className="deploy-panel">
+            <div>
+              <h2 id="deploy-title">Run your own ladder.</h2>
+              <p>
+                BidLadder is MIT licensed and self-hosted on one Cloudflare Worker with one D1
+                database.
+              </p>
             </div>
+            <ul>
+              <li>Stripe-hosted payments</li>
+              <li>Built-in moderation</li>
+              <li>Your brand and your rules</li>
+            </ul>
+            <a className="button button-inverse" href="/deploy">
+              Deploy your own <span aria-hidden="true">→</span>
+            </a>
           </section>
         </section>
       </main>
 
       <footer className="site-footer page-frame">
-        <Brand compact />
+        <Brand compact name={loaderData.ladder.name} />
         <p>
-          Open source under the{" "}
-          <a href="https://github.com/borealbit/bidladder/blob/main/LICENSE">MIT License</a>
+          <a href="/rules">Rules</a> · Sponsored placements are reviewed before publication.
         </p>
         <p>
-          Created by <strong>Dom Liu</strong> · Maintained by <strong>BorealBit</strong>
+          Powered by{" "}
+          <a href="/deploy">
+            <strong>BidLadder</strong>
+          </a>
         </p>
       </footer>
     </div>

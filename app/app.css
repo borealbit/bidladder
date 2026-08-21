@@ -282,7 +282,9 @@ a {
   align-items: center;
   display: grid;
   gap: 1rem;
-  grid-template-columns: 52px minmax(150px, 1.1fr) minmax(180px, 1.4fr) minmax(110px, 0.65fr);
+  grid-template-columns:
+    52px minmax(150px, 1.05fr) minmax(180px, 1.35fr) minmax(110px, 0.55fr)
+    minmax(140px, 0.65fr);
 }
 
 .leaderboard-head {
@@ -294,7 +296,7 @@ a {
   text-transform: uppercase;
 }
 
-.leaderboard-head span:last-child {
+.leaderboard-head span:nth-last-child(-n + 2) {
   text-align: right;
 }
 
@@ -332,6 +334,35 @@ a {
   text-align: right;
 }
 
+.amount small {
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 0.68rem;
+  font-weight: 500;
+}
+
+.rank-action {
+  background: transparent;
+  border: 1px solid var(--rule-dark);
+  color: var(--ink);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  justify-self: end;
+  padding: 0.55rem 0.7rem;
+  text-align: center;
+  text-decoration: none;
+  transition:
+    background 140ms ease,
+    color 140ms ease;
+}
+
+.rank-action:hover {
+  background: var(--ink);
+  color: white;
+}
+
 .sponsor-cell {
   align-items: center;
   display: flex;
@@ -366,8 +397,17 @@ a {
 
 .tagline {
   color: var(--muted);
+  display: flex;
+  flex-direction: column;
   font-size: 0.86rem;
+  gap: 0.28rem;
   line-height: 1.45;
+}
+
+.placement-metrics {
+  color: var(--orange-dark);
+  font-family: "DM Mono", ui-monospace, monospace;
+  font-size: 0.68rem;
 }
 
 .leaderboard-empty {
@@ -402,6 +442,35 @@ a {
   padding-inline: 0;
 }
 
+.checkout-notice {
+  align-items: center;
+  border-bottom: 1px solid currentColor;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  padding-block: 0.85rem;
+}
+
+.checkout-notice p {
+  margin: 0;
+}
+
+.checkout-notice--paid {
+  background: var(--green-bg);
+  color: var(--green);
+}
+
+.checkout-notice--cancelled,
+.checkout-notice--processing {
+  background: #fff7e8;
+  color: #7a4a00;
+}
+
+.checkout-notice--error {
+  background: var(--red-bg);
+  color: var(--red);
+}
+
 .bid-panel,
 .how-panel {
   padding: clamp(2.5rem, 5vw, 5rem) clamp(1.25rem, 4vw, 4rem);
@@ -415,6 +484,18 @@ a {
   align-items: baseline;
   display: flex;
   justify-content: space-between;
+}
+
+.bid-panel-heading > div > p {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 0.5rem 0 0;
+}
+
+.form-step {
+  color: var(--muted);
+  font-family: "DM Mono", ui-monospace, monospace;
+  font-size: 0.72rem;
 }
 
 .bid-panel-heading p,
@@ -483,10 +564,90 @@ a {
   font-family: "DM Mono", ui-monospace, monospace;
 }
 
+.amount-stepper {
+  display: grid;
+  grid-template-columns: 52px 34px minmax(0, 1fr) 52px;
+}
+
+.amount-stepper > span,
+.amount-stepper > button {
+  align-items: center;
+  background: var(--paper-raised);
+  border: 1px solid var(--rule-dark);
+  display: flex;
+  justify-content: center;
+}
+
+.amount-stepper > button {
+  cursor: pointer;
+  font-size: 1.15rem;
+}
+
+.amount-stepper > button:hover {
+  background: var(--ink);
+  color: white;
+}
+
+.amount-stepper > span {
+  border-left: 0;
+  border-right: 0;
+  font-family: "DM Mono", ui-monospace, monospace;
+}
+
+.amount-stepper input {
+  border-left: 0;
+  border-right: 0;
+  font-family: "DM Mono", ui-monospace, monospace;
+  font-size: 1.2rem;
+  font-weight: 500;
+  text-align: center;
+}
+
 .form-note {
   color: var(--muted);
   font-size: 0.78rem;
   margin: -0.35rem 0 0;
+}
+
+.bid-summary {
+  border-bottom: 1px solid var(--rule-dark);
+  border-left: 0;
+  border-right: 0;
+  border-top: 1px solid var(--rule-dark);
+  margin: 0;
+  min-width: 0;
+  padding-block: 1rem;
+  padding-inline: 0;
+}
+
+.bid-summary strong {
+  display: block;
+  font-family: "DM Mono", ui-monospace, monospace;
+  font-size: 0.95rem;
+  overflow-wrap: anywhere;
+}
+
+.bid-summary p {
+  color: var(--muted);
+  font-size: 0.82rem;
+  margin: 0.45rem 0 0;
+}
+
+.bid-summary p span {
+  color: var(--ink);
+  font-family: "DM Mono", ui-monospace, monospace;
+  font-weight: 700;
+}
+
+.form-actions {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.4fr);
+}
+
+.form-actions .button {
+  min-width: 0;
+  width: 100%;
 }
 
 .form-message {
@@ -592,6 +753,280 @@ a {
 .site-footer a,
 .site-footer strong {
   color: var(--ink);
+}
+
+.market-hero {
+  align-items: stretch;
+  border-bottom: 1px solid var(--rule-dark);
+  display: grid;
+  grid-template-columns: minmax(360px, 0.86fr) minmax(520px, 1.14fr);
+  min-height: 660px;
+  padding-inline: 0;
+}
+
+.market-hero > * {
+  min-width: 0;
+}
+
+.market-hero-copy {
+  align-items: flex-start;
+  border-right: 1px solid var(--rule);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(3.5rem, 6vw, 6.5rem) clamp(2rem, 5vw, 5rem) clamp(3rem, 6vw, 6rem)
+    clamp(1.25rem, 4vw, 4rem);
+}
+
+.market-hero-copy h1,
+.deploy-hero h1,
+.content-page h1 {
+  font-size: clamp(3.2rem, 5.7vw, 6.7rem);
+  font-weight: 800;
+  letter-spacing: -0.075em;
+  line-height: 0.94;
+  margin: 0;
+}
+
+.market-hero-copy h1 span {
+  color: var(--orange);
+  white-space: nowrap;
+}
+
+.market-hero-copy > p {
+  color: var(--muted);
+  font-size: clamp(1.05rem, 1.35vw, 1.3rem);
+  line-height: 1.55;
+  margin: 2rem 0 0;
+  max-width: 680px;
+}
+
+.market-facts {
+  border-top: 1px solid var(--rule);
+  display: grid;
+  font-size: 0.75rem;
+  gap: 0.85rem;
+  grid-template-columns: repeat(3, auto);
+  margin-top: 2rem;
+  margin-bottom: 0;
+  padding-left: 0;
+  padding-top: 1rem;
+  width: 100%;
+}
+
+.market-facts li {
+  color: var(--muted);
+  list-style: none;
+}
+
+.market-facts strong {
+  color: var(--ink);
+  display: block;
+  font-family: "DM Mono", ui-monospace, monospace;
+  margin-bottom: 0.2rem;
+}
+
+.market-hero .bid-panel {
+  border-right: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(3rem, 6vw, 6rem) clamp(1.25rem, 4vw, 4rem);
+}
+
+.market-hero .bid-panel-heading h2 {
+  font-size: clamp(1.7rem, 2.4vw, 2.5rem);
+}
+
+.market-hero .bid-form {
+  margin-top: 2.2rem;
+  min-width: 0;
+}
+
+.market-hero .bid-form input,
+.market-hero .amount-stepper {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.leaderboard-frame {
+  border-bottom: 1px solid var(--rule-dark);
+  padding-inline: 0;
+}
+
+.leaderboard-frame .leaderboard {
+  min-height: 430px;
+}
+
+.leaderboard-rows {
+  content-visibility: auto;
+}
+
+.lower-grid .how-panel {
+  border-right: 1px solid var(--rule);
+}
+
+.deploy-panel {
+  background: var(--ink);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: clamp(2.5rem, 5vw, 5rem) clamp(1.25rem, 4vw, 4rem);
+}
+
+.deploy-panel h2,
+.deploy-command h2,
+.deploy-details h2 {
+  font-size: clamp(1.7rem, 2.5vw, 2.8rem);
+  letter-spacing: -0.055em;
+  line-height: 1.05;
+  margin: 0;
+}
+
+.deploy-panel p {
+  color: #c9c4bc;
+  line-height: 1.55;
+  margin: 1rem 0 0;
+  max-width: 520px;
+}
+
+.deploy-panel ul {
+  list-style: none;
+  margin: 2.5rem 0;
+  padding: 0;
+}
+
+.deploy-panel li {
+  border-top: 1px solid #514d48;
+  font-family: "DM Mono", ui-monospace, monospace;
+  font-size: 0.8rem;
+  padding: 0.9rem 0;
+}
+
+.button-inverse {
+  border-color: white;
+  color: white;
+  width: fit-content;
+}
+
+.button-inverse:hover {
+  background: white;
+  color: var(--ink);
+}
+
+.content-page {
+  min-height: calc(100vh - 194px);
+  padding-bottom: clamp(4rem, 8vw, 8rem);
+  padding-top: clamp(4rem, 8vw, 8rem);
+}
+
+.content-page article {
+  margin-inline: auto;
+  max-width: 840px;
+}
+
+.content-page h1 {
+  border-bottom: 1px solid var(--rule-dark);
+  padding-bottom: 2rem;
+}
+
+.content-page .content-lead {
+  color: var(--ink);
+  font-size: clamp(1.25rem, 2.2vw, 1.8rem);
+  letter-spacing: -0.03em;
+  line-height: 1.45;
+  margin-top: 2.5rem;
+}
+
+.content-page h2 {
+  font-size: clamp(1.45rem, 2.2vw, 2rem);
+  letter-spacing: -0.045em;
+  margin: 4rem 0 1rem;
+}
+
+.content-page p,
+.content-page li {
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.content-page ul {
+  padding-left: 1.2rem;
+}
+
+.content-page li + li {
+  margin-top: 0.7rem;
+}
+
+.deploy-hero {
+  min-height: 620px;
+  padding-bottom: clamp(4rem, 8vw, 8rem);
+  padding-top: clamp(4rem, 8vw, 8rem);
+}
+
+.deploy-hero h1 {
+  max-width: 980px;
+}
+
+.deploy-hero > p {
+  color: var(--muted);
+  font-size: clamp(1.15rem, 1.8vw, 1.5rem);
+  line-height: 1.55;
+  margin: 2rem 0 0;
+  max-width: 760px;
+}
+
+.deploy-details {
+  border-bottom: 1px solid var(--rule-dark);
+  border-top: 1px solid var(--rule-dark);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  padding-inline: 0;
+}
+
+.deploy-details > div {
+  min-height: 330px;
+  padding: clamp(2rem, 4vw, 4rem);
+}
+
+.deploy-details > div + div {
+  border-left: 1px solid var(--rule);
+}
+
+.deploy-details span {
+  color: var(--orange-dark);
+  font-family: "DM Mono", ui-monospace, monospace;
+}
+
+.deploy-details h2 {
+  margin-top: 4rem;
+}
+
+.deploy-details p,
+.deploy-command p {
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.deploy-command {
+  align-items: center;
+  display: grid;
+  gap: clamp(2rem, 6vw, 7rem);
+  grid-template-columns: 1fr 0.85fr;
+  padding-bottom: clamp(4rem, 8vw, 8rem);
+  padding-top: clamp(4rem, 8vw, 8rem);
+}
+
+.deploy-command pre {
+  background: var(--ink);
+  color: white;
+  font-family: "DM Mono", ui-monospace, monospace;
+  line-height: 1.8;
+  margin: 0;
+  overflow-x: auto;
+  padding: 2rem;
 }
 
 .admin-page {
@@ -723,7 +1158,7 @@ a {
 .admin-table {
   border-collapse: collapse;
   font-size: 0.84rem;
-  min-width: 980px;
+  min-width: 1120px;
   width: 100%;
 }
 
@@ -770,6 +1205,30 @@ a {
 
 .status-label--approved {
   color: var(--green);
+}
+
+.status-label--paid {
+  background: var(--green-bg);
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.status-label--checkout_open,
+.status-label--checkout_pending,
+.status-label--processing,
+.status-label--unpaid {
+  background: #fff7e8;
+  border-color: #9a6400;
+  color: #7a4a00;
+}
+
+.status-label--expired,
+.status-label--failed,
+.status-label--partially_refunded,
+.status-label--refunded {
+  background: var(--red-bg);
+  border-color: var(--red);
+  color: var(--red);
 }
 
 .status-label--rejected {
@@ -1081,5 +1540,138 @@ a {
   *::after {
     scroll-behavior: auto;
     transition-duration: 0.01ms;
+  }
+}
+
+@media (max-width: 1080px) {
+  .market-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .market-hero-copy {
+    border-bottom: 1px solid var(--rule);
+    border-right: 0;
+    min-height: 560px;
+  }
+
+  .market-hero .bid-panel {
+    min-height: 560px;
+  }
+
+  .leaderboard-head,
+  .leaderboard-row {
+    grid-template-columns: 44px minmax(150px, 1fr) minmax(180px, 1.2fr) 110px 140px;
+  }
+}
+
+@media (max-width: 780px) {
+  .site-header nav {
+    gap: 1.2rem;
+  }
+
+  .site-header nav a:not(:last-child) {
+    display: flex;
+  }
+
+  .site-header nav a:first-child {
+    display: none;
+  }
+
+  .market-hero-copy {
+    min-height: auto;
+  }
+
+  .market-hero-copy h1,
+  .deploy-hero h1,
+  .content-page h1 {
+    font-size: clamp(3rem, 13vw, 5rem);
+  }
+
+  .market-facts {
+    grid-template-columns: 1fr;
+  }
+
+  .market-facts strong {
+    display: inline;
+    margin-right: 0.3rem;
+  }
+
+  .leaderboard-row {
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+  }
+
+  .leaderboard-row .rank-action {
+    grid-column: 2 / -1;
+    justify-self: start;
+  }
+
+  .lower-grid .how-panel {
+    border-bottom: 1px solid var(--rule);
+    border-right: 0;
+  }
+
+  .deploy-details {
+    grid-template-columns: 1fr;
+  }
+
+  .deploy-details > div + div {
+    border-left: 0;
+    border-top: 1px solid var(--rule);
+  }
+
+  .deploy-command {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .site-header {
+    overflow: hidden;
+  }
+
+  .site-header nav {
+    flex: 0 0 auto;
+  }
+
+  .site-header nav a:last-child {
+    display: none;
+  }
+
+  .site-header nav a:nth-child(2) {
+    display: flex;
+  }
+
+  .market-hero-copy,
+  .market-hero .bid-panel {
+    padding-inline: 1rem;
+  }
+
+  .market-hero-copy {
+    padding-block: 3.5rem;
+  }
+
+  .market-hero .bid-panel {
+    min-height: auto;
+    padding-block: 3rem;
+  }
+
+  .market-hero-copy h1,
+  .deploy-hero h1,
+  .content-page h1 {
+    font-size: 2.85rem;
+    overflow-wrap: anywhere;
+  }
+
+  .amount-stepper {
+    grid-template-columns: 48px 30px minmax(0, 1fr) 48px;
+  }
+
+  .deploy-hero {
+    min-height: auto;
+  }
+
+  .deploy-hero .hero-actions,
+  .deploy-hero .button {
+    width: 100%;
   }
 }
