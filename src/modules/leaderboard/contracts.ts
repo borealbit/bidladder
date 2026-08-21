@@ -22,20 +22,26 @@ export type BidDecision = z.infer<typeof decisionSchema>["decision"];
 
 export interface PublicPlacement {
   amountCents: number;
+  clickCount: number;
   id: string;
   logoUrl: string | null;
   name: string;
   publishedAt: number;
   tagline: string;
+  updatedAt: number;
   websiteUrl: string;
 }
 
 export interface PublicLeaderboard {
+  generatedAt: number;
   ladder: {
+    bidIncrementCents: number;
     currency: string;
     description: string;
     minimumBidCents: number;
     name: string;
+    refundInitiationBusinessDays: number;
+    reviewWindowBusinessDays: number;
     slug: string;
   };
   placements: PublicPlacement[];

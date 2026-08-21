@@ -1,7 +1,9 @@
 import { Hono } from "hono";
 
 import { requireAdmin } from "../../http/admin-auth";
+import { readJson } from "../../http/body";
 import { HttpProblem } from "../../http/problem";
+import { enforceRateLimit, rateLimitKey, requestNetworkIdentity } from "../../http/rate-limit";
 import { createDatabase } from "../../platform/d1/client";
 import { bidSubmissionSchema, decisionSchema } from "./contracts";
 import { decideBid, getPublicLeaderboard, listBids, submitBid } from "./service";
@@ -9,19 +11,6 @@ import { decideBid, getPublicLeaderboard, listBids, submitBid } from "./service"
 type ApiEnvironment = {
   Bindings: Env;
 };
-
-async function readJson(request: Request): Promise<unknown> {
-  const contentType = request.headers.get("content-type") ?? "";
-  if (!contentType.toLowerCase().includes("application/json")) {
-    throw new HttpProblem(400, "bad_request", "Content-Type must be application/json.");
-  }
-
-  try {
-    return await request.json();
-  } catch {
-    throw new HttpProblem(400, "bad_request", "Request body must contain valid JSON.");
-  }
-}
 
 export function createLeaderboardApi() {
   const api = new Hono<ApiEnvironment>();
@@ -42,6 +31,20 @@ export function createLeaderboardApi() {
       );
     }
 
+    const networkIdentity = requestNetworkIdentity(context.req.raw);
+    if (networkIdentity) {
+      await enforceRateLimit(
+        context.env.PUBLIC_WRITE_RATE_LIMITER,
+        await rateLimitKey(`network:${networkIdentity}`),
+      );
+    }
+    await enforceRateLimit(
+      context.env.PUBLIC_WRITE_RATE_LIMITER,
+      await rateLimitKey(
+        `bid:${context.req.param("slug")}:${parsed.data.contactEmail.toLowerCase()}:${new URL(parsed.data.websiteUrl).hostname.toLowerCase()}`,
+      ),
+    );
+
     const idempotencyKey = context.req.header("Idempotency-Key") ?? "";
     const database = createDatabase(context.env.DB);
     const result = await submitBid(
@@ -54,6 +57,9 @@ export function createLeaderboardApi() {
   });
 
   api.use("/admin/*", async (context, next) => {
+    const identity =
+      requestNetworkIdentity(context.req.raw) ?? context.req.header("Authorization") ?? "none";
+    await enforceRateLimit(context.env.ADMIN_RATE_LIMITER, await rateLimitKey(`admin:${identity}`));
     await requireAdmin(context.req.raw, context.env.ADMIN_API_KEY_HASH);
     await next();
   });

@@ -4,6 +4,8 @@ export type ProblemCode =
   | "forbidden"
   | "internal_error"
   | "not_found"
+  | "rate_limited"
+  | "request_too_large"
   | "service_unavailable"
   | "unauthorized";
 
