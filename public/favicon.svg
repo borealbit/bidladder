@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>BidLadder</title>
+  <rect width="64" height="64" fill="#11100f" />
+  <path d="M12 44h40v8H12zm8-16h32v8H20zm8-16h24v8H28z" fill="#ff4d00" />
+</svg>
