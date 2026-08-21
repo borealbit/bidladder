@@ -23,6 +23,7 @@
     "check": "pnpm check:architecture && react-router typegen && wrangler types --check && tsc -b && biome check .",
     "check:write": "biome check --write .",
     "test": "vitest run",
+    "verify:deployment": "node scripts/verify-deployment.mjs",
     "quality": "pnpm check && pnpm test && pnpm build",
     "postinstall": "wrangler types"
   },
@@ -33,6 +34,7 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-router": "8.3.0",
+    "stripe": "22.5.0",
     "zod": "4.4.3"
   },
   "devDependencies": {
